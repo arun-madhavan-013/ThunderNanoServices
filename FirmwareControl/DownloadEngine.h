@@ -47,6 +47,7 @@ namespace PluginHost {
             , _adminLock()
             , _notifier(notifier)
             , _storage()
+            , _percentage(0)
             , _interval(interval * 1000)
             , _checkHash(false)
             , _activity(*this)
@@ -67,8 +68,6 @@ namespace PluginHost {
         {
             Core::URL url(locator);
             uint32_t result = (url.IsValid() == true ? Core::ERROR_INPROGRESS : Core::ERROR_INCORRECT_URL);
-
-
             _adminLock.Lock();
 
             // But I guess for the firmware control, we are getting the
@@ -95,6 +94,7 @@ namespace PluginHost {
 
                     if (((result == Core::ERROR_NONE) || (result == Core::ERROR_INPROGRESS)) && (_interval != 0)) {
                         _activity.Revoke();
+                        _percentage = 0;
                         _activity.Schedule(Core::Time::Now().Add(_interval));
                     }
                 }
@@ -170,13 +170,15 @@ namespace PluginHost {
 
             if (_notifier != nullptr) {
 
-                uint8_t percentage = static_cast<uint8_t>((static_cast<float>(BaseClass::Transferred()) * 100)/static_cast<float>(BaseClass::FileSize()));
-                if (percentage) {
+                uint8_t percentage = static_cast<uint8_t>((static_cast<float>(BaseClass::Transferred()) * 100)/static_cast<float>(BaseClass::ContentSize()));
+
+                if (percentage && (_percentage != percentage)) {
                     _notifier->NotifyProgress(percentage);
                 }
                 if (percentage < 100) {
                     _activity.Schedule(Core::Time::Now().Add(_interval));
                 }
+                _percentage = percentage;
             }
 
             _adminLock.Unlock();
@@ -187,6 +189,7 @@ namespace PluginHost {
         INotifier* _notifier;
         Core::File _storage;
 
+        uint8_t _percentage;
         uint32_t _interval;
         bool _checkHash;
         uint8_t _HMAC[Crypto::HASH_SHA256];
