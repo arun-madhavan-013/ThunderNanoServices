@@ -1,0 +1,13 @@
+{
+ "locator":"libWPEFrameworkVolumeControl.so",
+ "classname":"VolumeControl",
+ "precondition":[
+  "Platform"
+ ],
+ "autostart":true,
+ "configuration":{
+  "root":{
+   "mode":"Off"
+  }
+ }
+}
